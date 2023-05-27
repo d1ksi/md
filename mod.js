@@ -1,3 +1,6 @@
+const reducers = {
+   promise: promiseReducer, auth: authReducer, cart: cartReducer
+}
 function createStore(reducer) {
    let state = reducer(undefined, {}) //стартова ініціалізація стану, запуск редьюсера зі state === undefined
    let cbs = []                     //масив передплатників
@@ -20,7 +23,36 @@ function createStore(reducer) {
       subscribe //додавання subscribe в об'єкт
    }
 }
-
+function combineReducers(reducers) {
+   function totalReducer(totalState = {}, action) {
+      const newTotalState = {} //об'єкт, який зберігатиме лише нові стани дочірніх редьюсерів
+      //цикл + квадратні дужки дозволяють написати код, який працюватиме з будь-якою кількістю дочірніх ред'юсерів
+      for (const [reducerName, childReducer] of Object.entries(reducers)) {
+         const newState = childReducer(totalState[reducerName], action) //запуск дочірнього ред'юсера
+         if (newState !== totalState[reducerName]) { //якщо він відреагував на action
+            newTotalState[reducerName] = newState //додаємо його в NewTotalState
+         }
+      }
+      //Універсальна перевірка на те, що хоча б один дочірній редьюсер створив новий стейт:
+      if (Object.values(newTotalState).length) {
+         return { ...totalState, ...newTotalState } //створюємо новий загальний стейт, накладаючи новий стейти дочірніх редьюсерів на старі
+      }
+      return totalState //якщо екшен був зрозумілий жодним із дочірніх редьюсерів, повертаємо загальний стейт як був.
+   }
+   return totalReducer
+}
+const actionPromise = promise =>
+   async dispatch => {
+      dispatch(actionPending()) //сигналізуємо redux, що проміс почався
+      try {
+         const payload = await promise //очікуємо промісу
+         dispatch(actionFulfilled(payload)) //сигналізуємо redux, що проміс успішно виконано
+         return payload //у місці запуску store.dispatch з цим thunk можна також отримати результат промісу
+      }
+      catch (error) {
+         dispatch(actionRejected(error)) //у разі помилки - сигналізуємо redux, що проміс не склався
+      }
+   }
 const actionPending = (promiseName) => ({
    type: "PROMISE",
    status: "PENDING",
@@ -253,6 +285,7 @@ const gqlRootCats = () => {
 };
 
 const actionRootCats = () => actionPromise("rootCats", gqlRootCats());
+actionRootCats()
 
 //Запит для отримання однієї категорії з товарами та картинками
 const gqlCatOne = (id) => {
@@ -365,7 +398,17 @@ function localStoredReducer(originalReducer, localStorageKey) {
    wrapper.initialized = false;
    return wrapper;
 }
-const store = createStore(localStoredReducer(cartReducer, 'cart'))
-store.subscribe(() => console.log(store.getState())) //
+const store = createStore(combineReducers(reducers));
+const asideElement = document.getElementById("aside");
+
+store.subscribe(() => {
+   const state = store.getState();
+   const links = Object.entries(state).map(([key, value]) => `<a href="#">${key}: ${value}</a>`);
+   asideElement.innerHTML = links.join("<br>");
+   return console.log(store.getState())
+});
+
+
+
 store.dispatch(actionCartAdd({ _id: 'пиво', price: 50 }))
 store.dispatch(actionCartAdd({ _id: 'чіпси', price: 75 }))
