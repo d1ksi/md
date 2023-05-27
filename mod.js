@@ -1,6 +1,4 @@
-const reducers = {
-   promise: promiseReducer, auth: authReducer, cart: cartReducer
-}
+
 function createStore(reducer) {
    let state = reducer(undefined, {}) //стартова ініціалізація стану, запуск редьюсера зі state === undefined
    let cbs = []                     //масив передплатників
@@ -257,20 +255,20 @@ const actionCartClear = () => ({ //В результате выполнения 
 
 async function gql(query, variables) {
    const url = "http://shop-roles.node.ed.asmer.org.ua/graphql";
+   const headers = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+   };
+   if (localStorage.authToken) {
+      headers.Authorization = "Bearer " + localStorage.authToken;
+   }
    const result = await fetch(url, {
       method: "POST",
-      headers: {
-         "Content-Type": "application/json",
-         Accept: "application/json",
-      },
+      headers: headers,
       body: JSON.stringify({ query: query, variables: variables }),
    });
    const data = await result.json();
    return data;
-}
-
-if (localStorage.authToken) {
-   headers.Authorization = "Bearer " + localStorage.authToken;
 }
 
 //Кореневі категорії
@@ -285,7 +283,6 @@ const gqlRootCats = () => {
 };
 
 const actionRootCats = () => actionPromise("rootCats", gqlRootCats());
-actionRootCats()
 
 //Запит для отримання однієї категорії з товарами та картинками
 const gqlCatOne = (id) => {
@@ -398,6 +395,9 @@ function localStoredReducer(originalReducer, localStorageKey) {
    wrapper.initialized = false;
    return wrapper;
 }
+const reducers = {
+   promise: promiseReducer, auth: authReducer, cart: cartReducer
+};
 const store = createStore(combineReducers(reducers));
 const asideElement = document.getElementById("aside");
 
@@ -410,5 +410,4 @@ store.subscribe(() => {
 
 
 
-store.dispatch(actionCartAdd({ _id: 'пиво', price: 50 }))
-store.dispatch(actionCartAdd({ _id: 'чіпси', price: 75 }))
+store.dispatch(actionRootCats())
