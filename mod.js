@@ -41,7 +41,7 @@ const actionRejected = (promiseName, error) => ({
    error
 });
 
-const actionPromise = (promiseName, promise) => {
+const mise = (promiseName, promise) => {
    return async (dispatch) => {
       try {
          dispatch(actionPending(promiseName));
@@ -66,6 +66,7 @@ const promiseReducer = (state = {}, action) => {
    }
    return state;
 }
+
 // //PROVERKA
 // const store = createStore(promiseReducer)
 // store.subscribe(() => console.log(store.getState())) //має запускатися 6 разів
@@ -222,95 +223,117 @@ const actionCartClear = () => ({ //В результате выполнения 
 // store.dispatch(actionCartClear()) // {}
 
 
-(async () => {
-   const endpoint = "http://shop-roles.node.ed.asmer.org.ua/graphql";
-   const gqlRequest = await getGql(endpoint);
-   const catQuery = `query cf {
-      CategoryFind(query: "[{\\"parent\\":null}]" ) {
-         _id
-         createdAt
-         name
+async function gql(query, variables) {
+   const url = "http://shop-roles.node.ed.asmer.org.ua/graphql";
+   const result = await fetch(url, {
+      method: "POST",
+      headers: {
+         "Content-Type": "application/json",
+         Accept: "application/json",
+      },
+      body: JSON.stringify({ query: query, variables: variables }),
+   });
+   const data = await result.json();
+   return data;
+}
+
+if (localStorage.authToken) {
+   headers.Authorization = "Bearer " + localStorage.authToken;
+}
+
+//Кореневі категорії
+const gqlRootCats = () => {
+   const catQuery = `query cats($q: String){
+      CategoryFind(query: $q){ 
+      _id name
       }
    }`;
-   try {
-      const categories = await gqlRequest(catQuery);
-      console.log(categories);
-   } catch (error) {
-      console.error('GraphQL request error:', error);
-   }
-   const catOneQuery = `query cfo {
-      CategoryFindOne(query:"[{\\"_id\\":\\"63dd6537d5e3301cba63a345\\"}]"){
-         _id
-         name
-         goods{
-            _id
-            name
-            price
-            images{
-               url
-            }
-         }
-         subCategories{
-            _id
-            name
-         }
+   const varRootCats = { q: "[{}]" };
+   return gql(catQuery, varRootCats);
+};
+
+const actionRootCats = () => actionPromise("rootCats", gqlRootCats());
+
+//Запит для отримання однієї категорії з товарами та картинками
+const gqlCatOne = (id) => {
+   const catOneQuery = `query oneCatWithGoodsImgs($q: String){
+      CategoryFindOne(query: $q){ _id name image{url}
+      goods{_id name price images{url}}
+   }}`;
+   return gql(catOneQuery, { q: JSON.stringify([{ _id: `${id}` }]) });
+};
+
+const actionCatOne = (id) => actionPromise("oneCat", gqlCatOne(id));
+
+//Запит на отримання товару з описом та картинками
+const gqlGoodOne = (id) => {
+   const goodOneQuery = `query catsWithImgsDescription($q: String) {
+      GoodFindOne(query: $q) {
+      _id
+      images {
+         url
+      }
+      name
+      price
+      description
       }
    }`;
-   try {
-      const category = await gqlRequest(catOneQuery);
-      console.log(category);
-   } catch (error) {
-      console.error('GraphQL request error:', error);
-   }
-   const registerMutation = `mutation register($login:String, $password: String){
-      UserUpsert(user: {login:$login, password: $password}){
-         _id
-         login
-         createdAt
+   return gql(goodOneQuery, { q: JSON.stringify([{ _id: `${id}` }]) });
+};
+
+const actionGoodOne = (id) => actionPromise("oneGood", gqlGoodOne(id));
+
+//Запит на реєстрацію
+const gqlRegister = (log, pass) => {
+   const registerQuery = `mutation reg($login: String!, $password: String!) {
+      UserUpsert(user: { login: $login, password: $password }) {
+      _id
+      login
       }
    }`;
-   try {
-      const registerResult = await gqlRequest(registerMutation, { login: "test", password: "password" });
-      console.log(registerResult);
-   } catch (error) {
-      console.error('GraphQL request error:', error);
-   }
-   const loginQuery = `query login($login:String, $password:String){
+   return gql(registerQuery, { login: `${log}`, password: `${pass}` });
+};
+
+const actionRegister = (log, pass) =>
+   actionPromise("Registration", gqlRegister(log, pass));
+
+//Логін
+const actionLogin = (log, pass) => {
+   const gqlLogin = (log, pass) => {
+      const loginQuery = `query login($login:String, $password:String){
       login(login:$login, password:$password)
-   }`;
-   try {
-      const token = await gqlRequest(loginQuery, { login: "test", password: "password" });
-      console.log(token);
-   } catch (error) {
-      console.error('GraphQL request error:', error);
-   }
-   const orderQuery = `query orger{
-      OrderFind(query: "[{}]") {
-         _id
-         createdAt
-         total
+      }`;
+      return gql(loginQuery, { login: `${log}`, password: `${pass}` });
+   };
+   return actionPromise("Login", gqlLogin(log, pass));
+};
+
+//Запит історії замовлень
+const actionHistory = () => {
+   const gqlHistory = () => {
+      const historyQuery = `query OrderFind ($q: String) {OrderFind (query: $q) {
+      _id 
+      createdAt 
+      total
+      }}`;
+      return gql(historyQuery, { q: "[{}]" });
+   };
+   return actionPromise("History", gqlHistory());
+};
+
+//Запит оформлення замовлення
+const actionOrder = (count, id) => {
+   const gqlOrder = (count, id) => {
+      const orderQuery = `mutation newOrder($goods: [OrderGoodInput]) {
+         OrderUpsert(order: {orderGoods: $goods}) {
+         _id createdAt total
       }
-   }`;
-   try {
-      const orders = await gqlRequest(orderQuery);
-      console.log(orders);
-   } catch (error) {
-      console.error('GraphQL request error:', error);
-   }
-   const newOrderMutation = `mutation newOrder($goods: [OrderGoodInput]) {
-      OrderUpsert(order: {orderGoods: $goods}) {
-         _id
-         createdAt
-         total
-      }
-   }`;
-   try {
-      const newOrderResult = await gqlRequest(newOrderMutation, { goods: [{ name: "Product 1", price: 10 }, { name: "Product 2", price: 20 }] });
-      console.log(newOrderResult);
-   } catch (error) {
-      console.error('GraphQL request error:', error);
-   }
-})();
+      }`;
+      return gql(orderQuery, { goods: [{ count, good: { _id: `${id}` } }] });
+   };
+   return actionPromise("Order", gqlOrder(count, id));
+};
+
 
 function localStoredReducer(originalReducer, localStorageKey) {
    function wrapper(state, action) {
