@@ -39,18 +39,18 @@ function combineReducers(reducers) {
    }
    return totalReducer
 }
-const actionPromise = promise =>
-   async dispatch => {
-      dispatch(actionPending()) //сигналізуємо redux, що проміс почався
+const actionPromise = (promiseName, promise) => {
+   return async (dispatch) => {
       try {
-         const payload = await promise //очікуємо промісу
-         dispatch(actionFulfilled(payload)) //сигналізуємо redux, що проміс успішно виконано
-         return payload //у місці запуску store.dispatch з цим thunk можна також отримати результат промісу
+         dispatch(actionPending(promiseName));
+         const result = await promise;
+         dispatch(actionFulfilled(promiseName, result));
+      } catch (error) {
+         dispatch(actionRejected(promiseName, error));
       }
-      catch (error) {
-         dispatch(actionRejected(error)) //у разі помилки - сигналізуємо redux, що проміс не склався
-      }
-   }
+   };
+}
+
 const actionPending = (promiseName) => ({
    type: "PROMISE",
    status: "PENDING",
@@ -290,7 +290,7 @@ const gqlCatOne = (id) => {
       CategoryFindOne(query: $q){ _id name image{url}
       goods{_id name price images{url}}
    }}`;
-   return gql(catOneQuery, { q: JSON.stringify([{ _id: `${id}` }]) });
+   return gql(catOneQuery, { q: JSON.stringify([{ _id: id }]) });
 };
 
 const actionCatOne = (id) => actionPromise("oneCat", gqlCatOne(id));
@@ -399,15 +399,95 @@ const reducers = {
    promise: promiseReducer, auth: authReducer, cart: cartReducer
 };
 const store = createStore(combineReducers(reducers));
+console.log(store);
 const asideElement = document.getElementById("aside");
 
-store.subscribe(() => {
-   const state = store.getState();
-   const links = Object.entries(state).map(([key, value]) => `<a href="#">${key}: ${value}</a>`);
-   asideElement.innerHTML = links.join("<br>");
-   return console.log(store.getState())
-});
-
-
-
 store.dispatch(actionRootCats())
+store.dispatch(actionCatOne())
+
+
+
+function onhashchange() {
+   // Ваши действия при изменении хэша
+   console.log("Хэш изменен");
+   // Дополнительный код, который нужно выполнить
+}
+
+
+let selectedCategoryId = {};// Объявляем глобальную переменную для хранения id выбранной категории
+
+function asideRootCata(resultOfGetState) {
+   let rootCategories = resultOfGetState.promise?.rootCats?.payload?.data.CategoryFind;
+   if (!rootCategories) {
+      return;
+   }
+   let aside = document.getElementById("aside");
+   aside.innerText = "";
+   for (let category of rootCategories) {
+      let div = document.createElement("div");
+      div.className = "wraperCatCategory";
+      let a = document.createElement("a");
+      a.className = "asideCatCategory";
+      a.href = `#/category/${category.name}`;
+      a.innerText = category.name;
+      let idCat = category._id;
+      selectedCategoryId = idCat;
+      console.log(idCat);
+      // Добавляем обработчик события для onhashchange
+      a.addEventListener("click", function (event) {
+         event.preventDefault(); // Отменяем переход по ссылке
+         let categoryName = category.name;
+         let newHash = `#/category/${categoryName}`;
+         history.pushState(null, null, newHash);
+         sectionCartCat(category._id); // Передайте айди категории в функцию
+         selectedCategoryId = category._id;// Сохраняем id выбранной категории в глобальную переменную
+         console.log(category._id); // Выводим id категории в консоль
+         onhashchange();
+      });
+      div.appendChild(a);
+      aside.appendChild(div);
+   }
+}
+
+
+function sectionCartCat(resultOfGetState) {
+   let rootCategories =
+      resultOfGetState.promise?.oneCat?.payload?.data.CategoryFindOne.goods;
+   // console.log(resultOfGetState.promise.oneCat.payload.data.CategoryFindOne.goods);
+   if (!rootCategories) {
+      return;
+   }
+   let section = document.getElementById("section");
+   section.innerText = ""; // Используйте innerText, чтобы удалить все содержимое
+   for (let category of rootCategories) {
+      let div = document.createElement("div"); // Создайте отдельный div для каждой ссылки
+      // div.className = "wraperCart";
+      // let img = document.createElement("img");
+      // img.className = "imgCart";
+      // img.src = obj.images[0].url;
+      // div.appendChild(img);
+      let p = document.createElement("p");
+      p.className = "itemName";
+      p.innerText = category.name;
+      div.appendChild(p);
+      let price = document.createElement("p");
+      price.className = "itemPrice";
+      price.innerText = category.price + ' ГРН';
+      div.appendChild(price);
+      let button = document.createElement("button");
+      button.className = "buttonCard";
+      button.innerText = 'Подробнее';
+      div.appendChild(button);
+      section.appendChild(div); // Добавьте div в section
+      console.log(category)
+   }
+}
+
+store.subscribe(() => {
+   console.log(store.getState());
+   asideRootCata(store.getState());
+});
+store.subscribe(() => {
+   console.log(store.getState());
+   sectionCartCat(store.getState());
+});
