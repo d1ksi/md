@@ -403,7 +403,6 @@ console.log(store);
 const asideElement = document.getElementById("aside");
 
 store.dispatch(actionRootCats())
-store.dispatch(actionCatOne())
 
 
 
@@ -414,7 +413,6 @@ function onhashchange() {
 }
 
 
-let selectedCategoryId = {};// Объявляем глобальную переменную для хранения id выбранной категории
 
 function asideRootCata(resultOfGetState) {
    let rootCategories = resultOfGetState.promise?.rootCats?.payload?.data.CategoryFind;
@@ -428,26 +426,20 @@ function asideRootCata(resultOfGetState) {
       div.className = "wraperCatCategory";
       let a = document.createElement("a");
       a.className = "asideCatCategory";
-      a.href = `#/category/${category.name}`;
+      a.href = `#/category/${category._id}`;
       a.innerText = category.name;
-      let idCat = category._id;
-      selectedCategoryId = idCat;
-      console.log(idCat);
-      // Добавляем обработчик события для onhashchange
-      a.addEventListener("click", function (event) {
-         event.preventDefault(); // Отменяем переход по ссылке
-         let categoryName = category.name;
-         let newHash = `#/category/${categoryName}`;
-         history.pushState(null, null, newHash);
-         sectionCartCat(category._id); // Передайте айди категории в функцию
-         selectedCategoryId = category._id;// Сохраняем id выбранной категории в глобальную переменную
-         console.log(category._id); // Выводим id категории в консоль
-         onhashchange();
-      });
       div.appendChild(a);
       aside.appendChild(div);
    }
 }
+window.addEventListener('hashchange', () => {
+   const newHash = window.location.hash;// полная ссылка после #
+   const idCat = newHash.split('/')[2];//получаем текс после 2 / => айди нашей категории 
+   console.log(idCat);
+   // Вызываем store.dispatch и передаем значение idCat в actionCatOne
+   store.dispatch(actionCatOne(idCat));
+});
+// store.dispatch(actionCatOne())
 
 
 function sectionCartCat(resultOfGetState) {
@@ -461,10 +453,11 @@ function sectionCartCat(resultOfGetState) {
    section.innerText = ""; // Используйте innerText, чтобы удалить все содержимое
    for (let category of rootCategories) {
       let div = document.createElement("div"); // Создайте отдельный div для каждой ссылки
-      // div.className = "wraperCart";
+      div.className = "wraperCart";
       // let img = document.createElement("img");
-      // img.className = "imgCart";
-      // img.src = obj.images[0].url;
+      // img.className = "img-card";
+      // console.log(elem.images);
+      // img.src = "http://shop-roles.node.ed.asmer.org.ua/" + elem.images[0].url;
       // div.appendChild(img);
       let p = document.createElement("p");
       p.className = "itemName";
