@@ -403,6 +403,8 @@ console.log(store);
 const asideElement = document.getElementById("aside");
 
 store.dispatch(actionRootCats())
+store.dispatch(actionGoodOne())
+
 
 
 
@@ -454,11 +456,10 @@ function sectionCartCat(resultOfGetState) {
    for (let category of rootCategories) {
       let div = document.createElement("div"); // Создайте отдельный div для каждой ссылки
       div.className = "wraperCart";
-      // let img = document.createElement("img");
-      // img.className = "img-card";
-      // console.log(elem.images);
-      // img.src = "http://shop-roles.node.ed.asmer.org.ua/" + elem.images[0].url;
-      // div.appendChild(img);
+      let img = document.createElement("img");
+      img.className = "img-card";
+      img.src = "http://shop-roles.node.ed.asmer.org.ua/" + category.images[0].url;
+      div.appendChild(img);
       let p = document.createElement("p");
       p.className = "itemName";
       p.innerText = category.name;
@@ -476,6 +477,37 @@ function sectionCartCat(resultOfGetState) {
    }
 }
 
+
+
+
+function GoodOne(resultOfGetState) {
+   let rootCategories = resultOfGetState?.query?.oneGood?.payload?.GoodFindOne;
+   console.log(resultOfGetState?.query?.oneGood?.payload?.GoodFindOne);
+   if (!rootCategories) {
+      return;
+   }
+   let aside = document.getElementById("aside");
+   aside.innerText = "";
+   for (let category of rootCategories) {
+      let div = document.createElement("div");
+      div.className = "wraperCatCategory";
+      let a = document.createElement("a");
+      a.className = "asideCatCategory";
+      a.href = `#/category/${category._id}`;
+      a.innerText = category.name;
+      div.appendChild(a);
+      aside.appendChild(div);
+   }
+}
+
+
+
+
+
+
+
+
+
 store.subscribe(() => {
    console.log(store.getState());
    asideRootCata(store.getState());
@@ -483,4 +515,8 @@ store.subscribe(() => {
 store.subscribe(() => {
    console.log(store.getState());
    sectionCartCat(store.getState());
+});
+store.subscribe(() => {
+   console.log(store.getState());
+   GoodOne(store.getState());
 });
