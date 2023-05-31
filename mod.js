@@ -448,7 +448,7 @@ function sectionCartCat(resultOfGetState) {
    let rootCategories =
       resultOfGetState.promise?.oneCat?.payload?.data.CategoryFindOne.goods;
    // console.log(resultOfGetState.promise.oneCat.payload.data.CategoryFindOne.goods);
-   if (!rootCategories) {
+   if (!rootCategories || !rootCategories.length) {
       return;
    }
    let section = document.getElementById("section");
@@ -468,10 +468,12 @@ function sectionCartCat(resultOfGetState) {
       price.className = "itemPrice";
       price.innerText = category.price + ' ГРН';
       div.appendChild(price);
-      let button = document.createElement("button");
-      button.className = "buttonCard";
-      button.innerText = 'Подробнее';
-      div.appendChild(button);
+      let aButton = document.createElement("a");
+      aButton.className = "buttonHrefCard";
+      aButton.href = `#/goods/goods._id`;
+      // a.href = `#/goods/goods.id`;
+      aButton.innerText = 'Подробнее';
+      div.appendChild(aButton);
       section.appendChild(div); // Добавьте div в section
       console.log(category)
    }
