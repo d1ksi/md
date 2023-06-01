@@ -293,7 +293,7 @@ const gqlCatOne = (id) => {
    return gql(catOneQuery, { q: JSON.stringify([{ _id: id }]) });
 };
 
-const actionCatOne = (id) => actionPromise("oneCat", gqlCatOne(id));
+const actionCatOne = (id) => actionPromise("CategoryFindOne", gqlCatOne(id));
 
 //Запит на отримання товару з описом та картинками
 const gqlGoodOne = (id) => {
@@ -308,10 +308,12 @@ const gqlGoodOne = (id) => {
       description
       }
    }`;
-   return gql(goodOneQuery, { q: JSON.stringify([{ _id: `${id}` }]) });
+   return gql(goodOneQuery, {
+      q: JSON.stringify([{ _id: `${id}` }])
+   });
 };
 
-const actionGoodOne = (id) => actionPromise("oneGood", gqlGoodOne(id));
+const actionGoodOne = (id) => actionPromise("GoodFindOne", gqlGoodOne(id));
 
 //Запит на реєстрацію
 const gqlRegister = (log, pass) => {
@@ -436,18 +438,24 @@ function asideRootCata(resultOfGetState) {
 }
 window.addEventListener('hashchange', () => {
    const newHash = window.location.hash;// полная ссылка после #
-   const idCat = newHash.split('/')[2];//получаем текс после 2 / => айди нашей категории 
-   console.log(idCat);
+   const id = newHash.split('/')[2];//получаем текс после 2 / => айди нашей категории 
+   if (newHash.includes('category')) {
+      store.dispatch(actionPromise("CategoryFindOne", gqlCatOne(id)));
+   }
+   if (newHash.includes('goods')) {
+      store.dispatch(actionPromise("GoodFindOne", gqlGoodOne(id)));
+   }
+   console.log(id);
    // Вызываем store.dispatch и передаем значение idCat в actionCatOne
-   store.dispatch(actionCatOne(idCat));
+   store.dispatch(actionCatOne(id));
 });
 // store.dispatch(actionCatOne())
 
 
 function sectionCartCat(resultOfGetState) {
    let rootCategories =
-      resultOfGetState.promise?.oneCat?.payload?.data.CategoryFindOne.goods;
-   // console.log(resultOfGetState.promise.oneCat.payload.data.CategoryFindOne.goods);
+      resultOfGetState.promise?.CategoryFindOne?.payload?.data.CategoryFindOne.goods;
+   // console.log(resultOfGetState.promise.CategoryFindOne.payload.data.CategoryFindOne.goods);
    if (!rootCategories || !rootCategories.length) {
       return;
    }
@@ -470,8 +478,7 @@ function sectionCartCat(resultOfGetState) {
       div.appendChild(price);
       let aButton = document.createElement("a");
       aButton.className = "buttonHrefCard";
-      aButton.href = `#/goods/goods._id`;
-      // a.href = `#/goods/goods.id`;
+      // aButton.href = `#/category/${category._id}`;
       aButton.innerText = 'Подробнее';
       div.appendChild(aButton);
       section.appendChild(div); // Добавьте div в section
@@ -480,11 +487,9 @@ function sectionCartCat(resultOfGetState) {
 }
 
 
-
-
 function GoodOne(resultOfGetState) {
-   let rootCategories = resultOfGetState?.query?.oneGood?.payload?.GoodFindOne;
-   console.log(resultOfGetState?.query?.oneGood?.payload?.GoodFindOne);
+   let rootCategories = resultOfGetState?.query?.GoodFindOne?.payload?.GoodFindOne;
+   console.log(resultOfGetState?.query?.GoodFindOne?.payload?.GoodFindOne);
    if (!rootCategories) {
       return;
    }
