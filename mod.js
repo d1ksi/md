@@ -438,11 +438,11 @@ function asideRootCata(resultOfGetState) {
 }
 window.addEventListener('hashchange', () => {
    const newHash = window.location.hash;// полная ссылка после #
-   const id = newHash.split('/')[2];//получаем текс после 2 / => айди нашей категории 
+   const id = newHash.split('/').pop();//получаем текс после 2 / => айди нашей категории 
    if (newHash.includes('category')) {
       store.dispatch(actionPromise("CategoryFindOne", gqlCatOne(id)));
    }
-   if (newHash.includes('goods')) {
+   if (newHash.includes('good')) {
       store.dispatch(actionPromise("GoodFindOne", gqlGoodOne(id)));
    }
    console.log(id);
@@ -461,49 +461,57 @@ function sectionCartCat(resultOfGetState) {
    }
    let section = document.getElementById("section");
    section.innerText = ""; // Используйте innerText, чтобы удалить все содержимое
-   for (let category of rootCategories) {
+   for (let good of rootCategories) {
       let div = document.createElement("div"); // Создайте отдельный div для каждой ссылки
       div.className = "wraperCart";
       let img = document.createElement("img");
       img.className = "img-card";
-      img.src = "http://shop-roles.node.ed.asmer.org.ua/" + category.images[0].url;
+      img.src = "http://shop-roles.node.ed.asmer.org.ua/" + good.images[0].url;
       div.appendChild(img);
       let p = document.createElement("p");
       p.className = "itemName";
-      p.innerText = category.name;
+      p.innerText = good.name;
       div.appendChild(p);
       let price = document.createElement("p");
       price.className = "itemPrice";
-      price.innerText = category.price + ' ГРН';
+      price.innerText = good.price + ' ГРН';
       div.appendChild(price);
       let aButton = document.createElement("a");
       aButton.className = "buttonHrefCard";
-      // aButton.href = `#/category/${category._id}`;
+      aButton.href = `#/good/${good._id}`;
+      aButton.addEventListener("click", function () {
+         GoodOne(resultOfGetState);
+      });
       aButton.innerText = 'Подробнее';
       div.appendChild(aButton);
       section.appendChild(div); // Добавьте div в section
-      console.log(category)
+      console.log(good)
    }
 }
 
 
 function GoodOne(resultOfGetState) {
-   let rootCategories = resultOfGetState?.query?.GoodFindOne?.payload?.GoodFindOne;
+   const goods = resultOfGetState.query?.GoodFindOne?.payload?.data.GoodFindOne;
    console.log(resultOfGetState?.query?.GoodFindOne?.payload?.GoodFindOne);
-   if (!rootCategories) {
+   if (!goods) {
       return;
    }
-   let aside = document.getElementById("aside");
-   aside.innerText = "";
-   for (let category of rootCategories) {
+   for (let good of goods) {
       let div = document.createElement("div");
-      div.className = "wraperCatCategory";
-      let a = document.createElement("a");
-      a.className = "asideCatCategory";
-      a.href = `#/category/${category._id}`;
-      a.innerText = category.name;
-      div.appendChild(a);
-      aside.appendChild(div);
+      div.className = "descriptionCart";
+      let img = document.createElement("img");
+      img.className = "img-description";
+      img.src = "http://shop-roles.node.ed.asmer.org.ua/" + images[0].url;
+      div.appendChild(img);
+      let p = document.createElement("p");
+      p.className = "itemDescriptionName";
+      p.innerText = good.name;
+      div.appendChild(p);
+      let price = document.createElement("p");
+      price.className = "itemDescriptionPrice";
+      price.innerText = good.price + ' ГРН';
+      div.appendChild(price);
+      section.appendChild(div);
    }
 }
 
