@@ -503,6 +503,10 @@ function GoodOne(resultOfGetState) {
       img.className = "img-description";
       img.src = "http://shop-roles.node.ed.asmer.org.ua/" + images[0].url;
       div.appendChild(img);
+      let pDescription = document.createElement("p");
+      pDescription.className = "itemDescription";
+      pDescription.innerText = good.description;
+      div.appendChild(pDescription);
       let p = document.createElement("p");
       p.className = "itemDescriptionName";
       p.innerText = good.name;
