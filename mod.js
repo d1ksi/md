@@ -447,7 +447,7 @@ window.addEventListener('hashchange', () => {
    }
    console.log(id);
    // Вызываем store.dispatch и передаем значение idCat в actionCatOne
-   store.dispatch(actionCatOne(id));
+   // store.dispatch(actionCatOne(id));
 });
 // store.dispatch(actionCatOne())
 
@@ -479,20 +479,17 @@ function sectionCartCat(resultOfGetState) {
       let aButton = document.createElement("a");
       aButton.className = "buttonHrefCard";
       aButton.href = `#/good/${good._id}`;
-      aButton.addEventListener("click", function () {
-         GoodOne(resultOfGetState);
-      });
       aButton.innerText = 'Подробнее';
       div.appendChild(aButton);
       section.appendChild(div); // Добавьте div в section
-      console.log(good)
+      // console.log(good)
    }
 }
 
 
 function GoodOne(resultOfGetState) {
-   const goods = resultOfGetState.query?.GoodFindOne?.payload?.data.GoodFindOne;
-   console.log(resultOfGetState?.query?.GoodFindOne?.payload?.GoodFindOne);
+   const goods = resultOfGetState.promise?.GoodFindOne?.payload?.data.GoodFindOne;
+   console.log(resultOfGetState?.promise?.GoodFindOne?.payload?.GoodFindOne);
    if (!goods) {
       return;
    }
@@ -532,10 +529,16 @@ store.subscribe(() => {
    asideRootCata(store.getState());
 });
 store.subscribe(() => {
+   const newHash = window.location.hash;
+   if (newHash.includes('category')) {
+      sectionCartCat(store.getState());
+   }
    console.log(store.getState());
-   sectionCartCat(store.getState());
 });
 store.subscribe(() => {
+   const newHash = window.location.hash;
+   if (newHash.includes('good')) {
+      GoodOne(store.getState());
+   }
    console.log(store.getState());
-   GoodOne(store.getState());
 });
