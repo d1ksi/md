@@ -446,10 +446,7 @@ window.addEventListener('hashchange', () => {
       store.dispatch(actionPromise("GoodFindOne", gqlGoodOne(id)));
    }
    console.log(id);
-   // Вызываем store.dispatch и передаем значение idCat в actionCatOne
-   // store.dispatch(actionCatOne(id));
 });
-// store.dispatch(actionCatOne())
 
 
 function sectionCartCat(resultOfGetState) {
@@ -463,7 +460,7 @@ function sectionCartCat(resultOfGetState) {
    section.innerText = ""; // Используйте innerText, чтобы удалить все содержимое
    for (let good of rootCategories) {
       let div = document.createElement("div"); // Создайте отдельный div для каждой ссылки
-      div.className = "wraperCart";
+      div.id = "wraperCart"
       let img = document.createElement("img");
       img.className = "img-card";
       img.src = "http://shop-roles.node.ed.asmer.org.ua/" + good.images[0].url;
@@ -488,11 +485,18 @@ function sectionCartCat(resultOfGetState) {
 
 
 function GoodOne(resultOfGetState) {
-   const goods = resultOfGetState.promise?.GoodFindOne?.payload?.data.GoodFindOne;
-   console.log(resultOfGetState?.promise?.GoodFindOne?.payload?.GoodFindOne);
-   if (!goods) {
+   const goods = resultOfGetState?.promise?.GoodFindOne?.payload?.data?.GoodFindOne;
+   // console.log(resultOfGetState?.promise?.GoodFindOne?.payload?.data?.GoodFindOne);
+   const [, key] = window.location.hash.split("/");
+   console.log([, key]);
+   console.log(goods);
+   if (!goods || !([, key] === "good")) {
       return;
    }
+   // скрываем каталог товаров одной категории
+   let oncard = document.getElementById("wraperCart");
+   oncard.innerText = ""; // Используйте innerText, чтобы удалить все содержимое
+   // отображение описание отдельного товара и очистка перед заполнением
    for (let good of goods) {
       let div = document.createElement("div");
       div.className = "descriptionCart";
