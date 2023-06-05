@@ -488,44 +488,147 @@ function GoodOne(resultOfGetState) {
    const goods = resultOfGetState?.promise?.GoodFindOne?.payload?.data?.GoodFindOne;
    // console.log(resultOfGetState?.promise?.GoodFindOne?.payload?.data?.GoodFindOne);
    const [, key] = window.location.hash.split("/");
-   console.log(goods);
+   console.log(goods, key);
    let section = document.getElementById("section");
    section.innerHTML = "";
-   if (!goods || !([, key] === "good")) {
+   if (!goods || key !== "good") {
       return;
    }
-   for (let good of goods) {
-      let divgfo = createElement("div");
-      divgfo.id = "gfo-card";
-      let img = document.createElement("img");
-      img.className = "gfo-img";
-      img.src = "http://shop-roles.node.ed.asmer.org.ua/" + good.images[0].url;
-      divgfo.appendChild(img);
-      let p = document.createElement("p");
-      p.className = "gfo-name";
-      p.innerText = good.name;
-      divgfo.appendChild(p);
-      let description = document.createElement("p");
-      description.className = "gfo-description";
-      description.innerText = good.description;
-      divgfo.appendChild(description);
-      let price = document.createElement("p");
-      price.className = "gfo-price";
-      price.innerText = good.price + ' ГРН';
-      divgfo.appendChild(price);
-      let gfoButton = document.createElement("a");
-      gfoButton.className = "gfo-button";
-      // gfoButton.href = ``;
-      gfoButton.innerText = 'Добавить в корзину';
-      divgfo.appendChild(gfoButton);
-      section.appendChild(divgfo);
-   }
+   let divgfo = document.createElement("div");
+   divgfo.id = "gfo-card";
+   let img = document.createElement("img");
+   img.className = "gfo-img";
+   img.src = "http://shop-roles.node.ed.asmer.org.ua/" + goods.images[0].url;
+   divgfo.appendChild(img);
+   let p = document.createElement("p");
+   p.className = "gfo-name";
+   p.innerText = goods.name;
+   divgfo.appendChild(p);
+   let description = document.createElement("p");
+   description.className = "gfo-description";
+   description.innerText = goods.description;
+   divgfo.appendChild(description);
+   let price = document.createElement("p");
+   price.className = "gfo-price";
+   price.innerText = goods.price + ' ГРН';
+   divgfo.appendChild(price);
+   let gfoButton = document.createElement("a");
+   gfoButton.className = "gfo-button";
+   // gfoButton.href = ``;
+   gfoButton.innerText = 'Добавить в корзину';
+   divgfo.appendChild(gfoButton);
+   section.appendChild(divgfo);
 }
 
 
 
+let isLinksVisible = false; // Переменная для отслеживания состояния ссылок
+
+function clickProfile() {
+   const linksContainer = document.getElementById("linksContainer");
+   if (isLinksVisible) {
+      // Если ссылки уже видимы, скрыть их
+      linksContainer.innerHTML = "";
+      isLinksVisible = false;
+   } else {
+      const loginLink = document.createElement("a");
+      loginLink.href = `#/login`;
+      loginLink.id = "login";
+      loginLink.textContent = "Login"
+      loginLink.onclick = loginLinkClick;
+      const registerLink = document.createElement("a");
+      registerLink.href = `#/register`;
+      registerLink.id = "register";
+      registerLink.textContent = "Register";
+      registerLink.onclick = registerLinkClick;
+      const logoutLink = document.createElement("a");
+      logoutLink.href = ``;
+      logoutLink.id = "logout";
+      logoutLink.textContent = "Logout";
+      logoutLink.onclick = handleLinkClick;
+      linksContainer.innerHTML = "";
+      linksContainer.appendChild(loginLink);
+      linksContainer.appendChild(registerLink);
+      linksContainer.appendChild(logoutLink);
+      isLinksVisible = true;
+   }
+}
 
 
+function loginLinkClick() {
+   const linksContainer = document.getElementById("linksContainer");
+   linksContainer.innerHTML = ""; // Очистка контейнера ссылок перед построением новой логики
+   //Поле для ввода логина
+   const loginInput = document.createElement("input");
+   loginInput.type = "text";
+   loginInput.id = "liText";
+   loginInput.placeholder = "Login";
+   //Поле для ввода пароля
+   const passwordInput = document.createElement("input");
+   passwordInput.type = "password";
+   passwordInput.id = "piText";
+   passwordInput.placeholder = "Password";
+   //Чекбокс для пароля (по нажатию показывает пароль)
+   const showPasswordCheckbox = document.createElement("input");
+   showPasswordCheckbox.type = "checkbox";
+   showPasswordCheckbox.textContent = "Show Password";
+   showPasswordCheckbox.addEventListener("change", function () {
+      if (showPasswordCheckbox.checked) {
+         passwordInput.type = "text";
+      } else {
+         passwordInput.type = "password";
+      }
+   });
+   //Кнопка для отправки данных на вход
+   const submitButton = document.createElement("button");
+   submitButton.textContent = "Login";
+   submitButton.id = "profileButton";
+   submitButton.addEventListener("click", function () {
+      const loginValue = loginInput.value;
+      const passwordValue = passwordInput.value;
+      console.log("Login:", loginValue);
+      console.log("Password:", passwordValue);
+   });
+   linksContainer.appendChild(loginInput);
+   linksContainer.appendChild(passwordInput);
+   linksContainer.appendChild(showPasswordCheckbox);
+   linksContainer.appendChild(submitButton);
+}
+
+function registerLinkClick() {
+   const linksContainer = document.getElementById("linksContainer");
+   linksContainer.innerHTML = ""; // Очистка контейнера ссылок перед построением новой логики
+   //Поле для ввода логина
+   const loginInput = document.createElement("input");
+   loginInput.type = "text";
+   loginInput.id = "liText";
+   loginInput.placeholder = "Login";
+   //Поле для ввода пароля
+   const passwordInput = document.createElement("input");
+   passwordInput.type = "text";
+   passwordInput.id = "piText";
+   passwordInput.placeholder = "Password";
+   //Кнопка для отправки данных на вход
+   const submitButton = document.createElement("button");
+   submitButton.textContent = "Register";
+   submitButton.id = "profileButton";
+   submitButton.addEventListener("click", function () {
+      const loginValue = loginInput.value;
+      const passwordValue = passwordInput.value;
+      console.log("Login:", loginValue);
+      console.log("Password:", passwordValue);
+   });
+   linksContainer.appendChild(loginInput);
+   linksContainer.appendChild(passwordInput);
+   linksContainer.appendChild(submitButton);
+}
+
+
+
+function handleLinkClick() {
+   // Ваша логика обработки нажатия на ссылку
+   console.log("Link clicked");
+}
 
 
 
