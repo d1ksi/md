@@ -457,7 +457,7 @@ function sectionCartCat(resultOfGetState) {
       return;
    }
    let section = document.getElementById("section");
-   section.innerText = ""; // Используйте innerText, чтобы удалить все содержимое
+   section.innerHTML = ""; // Используйте innerText, чтобы удалить все содержимое
    for (let good of rootCategories) {
       let div = document.createElement("div"); // Создайте отдельный div для каждой ссылки
       div.id = "wraperCart"
@@ -488,35 +488,37 @@ function GoodOne(resultOfGetState) {
    const goods = resultOfGetState?.promise?.GoodFindOne?.payload?.data?.GoodFindOne;
    // console.log(resultOfGetState?.promise?.GoodFindOne?.payload?.data?.GoodFindOne);
    const [, key] = window.location.hash.split("/");
-   console.log([, key]);
    console.log(goods);
+   let section = document.getElementById("section");
+   section.innerHTML = "";
    if (!goods || !([, key] === "good")) {
       return;
    }
-   // скрываем каталог товаров одной категории
-   let oncard = document.getElementById("wraperCart");
-   oncard.innerText = ""; // Используйте innerText, чтобы удалить все содержимое
-   // отображение описание отдельного товара и очистка перед заполнением
    for (let good of goods) {
-      let div = document.createElement("div");
-      div.className = "descriptionCart";
+      let divgfo = createElement("div");
+      divgfo.id = "gfo-card";
       let img = document.createElement("img");
-      img.className = "img-description";
-      img.src = "http://shop-roles.node.ed.asmer.org.ua/" + images[0].url;
-      div.appendChild(img);
-      let pDescription = document.createElement("p");
-      pDescription.className = "itemDescription";
-      pDescription.innerText = good.description;
-      div.appendChild(pDescription);
+      img.className = "gfo-img";
+      img.src = "http://shop-roles.node.ed.asmer.org.ua/" + good.images[0].url;
+      divgfo.appendChild(img);
       let p = document.createElement("p");
-      p.className = "itemDescriptionName";
+      p.className = "gfo-name";
       p.innerText = good.name;
-      div.appendChild(p);
+      divgfo.appendChild(p);
+      let description = document.createElement("p");
+      description.className = "gfo-description";
+      description.innerText = good.description;
+      divgfo.appendChild(description);
       let price = document.createElement("p");
-      price.className = "itemDescriptionPrice";
+      price.className = "gfo-price";
       price.innerText = good.price + ' ГРН';
-      div.appendChild(price);
-      section.appendChild(div);
+      divgfo.appendChild(price);
+      let gfoButton = document.createElement("a");
+      gfoButton.className = "gfo-button";
+      // gfoButton.href = ``;
+      gfoButton.innerText = 'Добавить в корзину';
+      divgfo.appendChild(gfoButton);
+      section.appendChild(divgfo);
    }
 }
 
