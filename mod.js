@@ -316,28 +316,29 @@ const gqlGoodOne = (id) => {
 const actionGoodOne = (id) => actionPromise("GoodFindOne", gqlGoodOne(id));
 
 //Запит на реєстрацію
-const gqlRegister = (log, pass) => {
+const gqlRegister = (login, password) => {
    const registerQuery = `mutation reg($login: String!, $password: String!) {
       UserUpsert(user: { login: $login, password: $password }) {
       _id
+      createdAt
       login
       }
    }`;
-   return gql(registerQuery, { login: `${log}`, password: `${pass}` });
+   return gql(registerQuery, { login: login, password: password });
 };
 
 const actionRegister = (log, pass) =>
    actionPromise("Registration", gqlRegister(log, pass));
 
 //Логін
-const actionLogin = (log, pass) => {
-   const gqlLogin = (log, pass) => {
+const actionLogin = (login, password) => {
+   const gqlLogin = (login, password) => {
       const loginQuery = `query login($login:String, $password:String){
       login(login:$login, password:$password)
       }`;
-      return gql(loginQuery, { login: `${log}`, password: `${pass}` });
+      return gql(loginQuery, { login: login, password: password });
    };
-   return actionPromise("Login", gqlLogin(log, pass));
+   return actionPromise("Login", gqlLogin(login, password));
 };
 
 //Запит історії замовлень
@@ -535,17 +536,23 @@ function clickProfile() {
       loginLink.href = `#/login`;
       loginLink.id = "login";
       loginLink.textContent = "Login"
-      loginLink.onclick = loginLinkClick;
+      loginLink.addEventListener("click", (event) => {
+         event.preventDefault();
+         loginLinkClick();
+      });
       const registerLink = document.createElement("a");
       registerLink.href = `#/register`;
       registerLink.id = "register";
       registerLink.textContent = "Register";
-      registerLink.onclick = registerLinkClick;
+      registerLink.addEventListener("click", (event) => {
+         event.preventDefault();
+         registerLinkClick();
+      });
       const logoutLink = document.createElement("a");
       logoutLink.href = ``;
       logoutLink.id = "logout";
       logoutLink.textContent = "Logout";
-      logoutLink.onclick = handleLinkClick;
+      logoutLink.onclick = logoutLinkClick;
       linksContainer.innerHTML = "";
       linksContainer.appendChild(loginLink);
       linksContainer.appendChild(registerLink);
@@ -553,6 +560,36 @@ function clickProfile() {
       isLinksVisible = true;
    }
 }
+
+
+function actionFullRegister(login, password) {
+   return async (dispatch) => {
+      try {
+         const data = await dispatch(
+            actionPromise("getRegister", gqlRegister(login, password))
+         );
+         // console.log(data  )
+         if (data.UserUpsert.login) {
+            await dispatch(actionFullLogin(login, password));
+            // console.log(login, password )
+         }
+      } catch (error) {
+         console.log(error);
+      }
+   };
+}
+function actionFullLogin(login, password) {
+   return async (dispatch) => {
+      const data = await dispatch(
+         actionPromise("getFullLogin", gqlLogin(login, password))
+      );
+      // console.log(data);
+      if (data) {
+         await dispatch(actionAuthLogin(data.login));
+      }
+   };
+}
+
 
 
 function loginLinkClick() {
@@ -583,11 +620,14 @@ function loginLinkClick() {
    const submitButton = document.createElement("button");
    submitButton.textContent = "Login";
    submitButton.id = "profileButton";
-   submitButton.addEventListener("click", function () {
-      const loginValue = loginInput.value;
-      const passwordValue = passwordInput.value;
-      console.log("Login:", loginValue);
-      console.log("Password:", passwordValue);
+   submitButton.addEventListener("click", function (event) {
+      event.preventDefault();
+      const login = loginInput.value;
+      const password = passwordInput.value;
+      store.dispatch(actionFullRegister(login, password));
+      loginInput.value = "";
+      passwordInput.value = "";
+      console.log(login, password);
    });
    linksContainer.appendChild(loginInput);
    linksContainer.appendChild(passwordInput);
@@ -612,11 +652,14 @@ function registerLinkClick() {
    const submitButton = document.createElement("button");
    submitButton.textContent = "Register";
    submitButton.id = "profileButton";
-   submitButton.addEventListener("click", function () {
-      const loginValue = loginInput.value;
-      const passwordValue = passwordInput.value;
-      console.log("Login:", loginValue);
-      console.log("Password:", passwordValue);
+   submitButton.addEventListener("click", function (event) {
+      event.preventDefault();
+      const login = loginInput.value;
+      const password = passwordInput.value;
+      store.dispatch(actionFullRegister(login, password));
+      loginInput.value = "";
+      passwordInput.value = "";
+      console.log(login, password);
    });
    linksContainer.appendChild(loginInput);
    linksContainer.appendChild(passwordInput);
@@ -625,10 +668,30 @@ function registerLinkClick() {
 
 
 
-function handleLinkClick() {
-   // Ваша логика обработки нажатия на ссылку
-   console.log("Link clicked");
+
+function logoutLinkClick() {
+   let outRegistr = document.getElementById("logout");
+   outRegistr.onclick = () => {
+      store.dispatch(actionAuthLogout());
+      fullLogin.value = "";
+      fullpassword.value = "";
+      console.log("Logout");
+   };
 }
+
+window.addEventListener("DOMContentLoaded", () => {
+   const token = localStorage.authToken;
+   if (token) {
+      const payload = jwtDecode(token);
+      console.log(`${payload.sub.login}`);
+   }
+});
+
+
+
+
+
+
 
 
 
