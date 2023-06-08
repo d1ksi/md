@@ -104,23 +104,34 @@ const promiseReducer = (state = {}, action) => {
 // store.dispatch(actionPromise('luke', fetch("https://swapi.dev/api/people/1").then(res => res.json())))
 // store.dispatch(actionPromise('tatooine', fetch("https://swapi.dev/api/planets/1").then(res => res.json())))
 
-const authReducer = (state = {}, action) => {
-   if (action.type === 'AUTH_LOGIN') {
-      try {
-         const payload = decodeToken(action.token);
-         return {
-            token: action.token,
-            payload: payload
-         };
-      } catch (error) {
-         return {};
+function jwtDecode(token) {
+   const [, payload] = token.split(".");
+   const secretPart = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+   return JSON.parse(secretPart);
+}
+const actionAuthLogin = (token) => ({ type: "AUTH_LOGIN", token });
+const actionAuthLogout = () => ({ type: "AUTH_LOGOUT" });
+
+
+
+function authReducer(state = {}, { type, token }) {
+   if (type === "AUTH_LOGIN") {
+      const payload = jwtDecode(token);
+      // console.log(payload);
+      localStorage.authToken = token;
+      // console.log(token);
+      if (localStorage.authToken) {
+         userName.innerHTML = `Добро пожаловать,${payload.sub.login}`;
       }
-   } else if (action.type === 'AUTH_LOGOUT') {
-      return {};
-   } else {
-      return state;
+      return { token, payload };
    }
-};
+   if (type === "AUTH_LOGOUT") {
+      delete localStorage.authToken;
+      userName.innerHTML = "";
+      return {};
+   }
+   return state;
+}
 
 
 // // Проверка
@@ -562,35 +573,6 @@ function clickProfile() {
 }
 
 
-function actionFullRegister(login, password) {
-   return async (dispatch) => {
-      try {
-         const data = await dispatch(
-            actionPromise("getRegister", gqlRegister(login, password))
-         );
-         // console.log(data  )
-         if (data.UserUpsert.login) {
-            await dispatch(actionFullLogin(login, password));
-            // console.log(login, password )
-         }
-      } catch (error) {
-         console.log(error);
-      }
-   };
-}
-function actionFullLogin(login, password) {
-   return async (dispatch) => {
-      const data = await dispatch(
-         actionPromise("getFullLogin", gqlLogin(login, password))
-      );
-      // console.log(data);
-      if (data) {
-         await dispatch(actionAuthLogin(data.login));
-      }
-   };
-}
-
-
 
 function loginLinkClick() {
    const linksContainer = document.getElementById("linksContainer");
@@ -619,12 +601,12 @@ function loginLinkClick() {
    //Кнопка для отправки данных на вход
    const submitButton = document.createElement("button");
    submitButton.textContent = "Login";
-   submitButton.id = "profileButton";
+   submitButton.id = "profileButtonLogin";
    submitButton.addEventListener("click", function (event) {
       event.preventDefault();
       const login = loginInput.value;
       const password = passwordInput.value;
-      store.dispatch(actionFullRegister(login, password));
+      store.dispatch(actionFullLogin(login, password));
       loginInput.value = "";
       passwordInput.value = "";
       console.log(login, password);
@@ -651,7 +633,7 @@ function registerLinkClick() {
    //Кнопка для отправки данных на вход
    const submitButton = document.createElement("button");
    submitButton.textContent = "Register";
-   submitButton.id = "profileButton";
+   submitButton.id = "profileButtonRegister";
    submitButton.addEventListener("click", function (event) {
       event.preventDefault();
       const login = loginInput.value;
@@ -666,7 +648,41 @@ function registerLinkClick() {
    linksContainer.appendChild(submitButton);
 }
 
-
+function actionFullRegister(login, password) {
+   return async (dispatch) => {
+      try {
+         console.log(login)
+         console.log(password)
+         const data = await gqlRegister(login, password);
+         console.log(data)
+         if (data?.data?.UserUpsert?.login) {
+            await dispatch(actionFullLogin(login, password));
+            // console.log(login, password )
+         }
+         if (data.errors && data.errors.length > 0) {
+            // Ошибка: пользователь уже существует
+            alert('Пользователь уже зарегистрирован, выберите другой Login');
+         }
+      } catch (error) {
+         console.log(error);
+      }
+   };
+}
+function actionFullLogin(login, password) {
+   return async (dispatch) => {
+      const data = await dispatch(
+         actionPromise("getFullLogin", actionLogin(login, password))
+      );
+      // console.log(data);
+      if (data) {
+         await dispatch(actionAuthLogin(data.login));
+         const linksContainer = document.getElementById("linksContainer");
+         linksContainer.innerHTML = "";
+         const logoutButton = document.getElementById('logout');
+         logoutButton.style.display = 'block';
+      }
+   };
+}
 
 
 function logoutLinkClick() {
@@ -713,4 +729,12 @@ store.subscribe(() => {
       GoodOne(store.getState());
    }
    console.log(store.getState());
+});
+store.subscribe(() => {
+   // console.log(store.getState());
+   actionFullRegister(store.getState());
+});
+store.subscribe(() => {
+   // console.log(store.getState());
+   actionFullLogin(store.getState());
 });
