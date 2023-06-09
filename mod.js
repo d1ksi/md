@@ -40,12 +40,12 @@ function combineReducers(reducers) {
    return totalReducer
 }
 const actionPromise = (promiseName, promise) => {
-   return async (dispatch) => {
+   return async dispatch => {
       try {
          dispatch(actionPending(promiseName));
-         const result = await promise;
+         const payload = await promise;
          dispatch(actionFulfilled(promiseName, result));
-         return result;
+         return payload;
       } catch (error) {
          dispatch(actionRejected(promiseName, error));
       }
@@ -76,8 +76,8 @@ const mise = (promiseName, promise) => {
    return async (dispatch) => {
       try {
          dispatch(actionPending(promiseName));
-         const result = await promise;
-         dispatch(actionFulfilled(promiseName, result));
+         const payload = await promise;
+         dispatch(actionFulfilled(promiseName, payload));
       } catch (error) {
          dispatch(actionRejected(promiseName, error));
       }
@@ -662,9 +662,7 @@ function actionFullRegister(login, password) {
       try {
          console.log(login)
          console.log(password)
-         const data = await dispatch(
-            actionPromise("getFullLogin", gqlRegister(login, password))
-         );
+         const data = await gqlRegister(login, password);
          console.log(data)
          if (data?.data?.UserUpsert?.login) {
             await dispatch(actionFullLogin(login, password));
