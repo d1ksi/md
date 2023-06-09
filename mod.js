@@ -45,6 +45,7 @@ const actionPromise = (promiseName, promise) => {
          dispatch(actionPending(promiseName));
          const result = await promise;
          dispatch(actionFulfilled(promiseName, result));
+         return result;
       } catch (error) {
          dispatch(actionRejected(promiseName, error));
       }
@@ -104,11 +105,20 @@ const promiseReducer = (state = {}, action) => {
 // store.dispatch(actionPromise('luke', fetch("https://swapi.dev/api/people/1").then(res => res.json())))
 // store.dispatch(actionPromise('tatooine', fetch("https://swapi.dev/api/planets/1").then(res => res.json())))
 
+// function jwtDecode(token) {
+//    const [, payload] = token.split(".");
+//    const secretPart = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+//    return JSON.parse(secretPart);
+// }
 function jwtDecode(token) {
-   const [, payload] = token.split(".");
-   const secretPart = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
-   return JSON.parse(secretPart);
+   if (typeof token !== 'undefined' && token.length > 0) {
+      const [, payload] = token.split(".");
+      const secretPart = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+      return JSON.parse(secretPart);
+   }
+   return null; // или другое значение по умолчанию, если token не является корректным
 }
+
 const actionAuthLogin = (token) => ({ type: "AUTH_LOGIN", token });
 const actionAuthLogout = () => ({ type: "AUTH_LOGOUT" });
 
@@ -417,7 +427,6 @@ console.log(store);
 const asideElement = document.getElementById("aside");
 
 store.dispatch(actionRootCats())
-store.dispatch(actionGoodOne())
 
 
 
@@ -653,7 +662,9 @@ function actionFullRegister(login, password) {
       try {
          console.log(login)
          console.log(password)
-         const data = await gqlRegister(login, password);
+         const data = await dispatch(
+            actionPromise("getFullLogin", gqlRegister(login, password))
+         );
          console.log(data)
          if (data?.data?.UserUpsert?.login) {
             await dispatch(actionFullLogin(login, password));
@@ -670,10 +681,8 @@ function actionFullRegister(login, password) {
 }
 function actionFullLogin(login, password) {
    return async (dispatch) => {
-      const data = await dispatch(
-         actionPromise("getFullLogin", actionLogin(login, password))
-      );
-      // console.log(data);
+      const data = await dispatch(actionLogin(login, password));
+      console.log(data);
       if (data) {
          await dispatch(actionAuthLogin(data.login));
          const linksContainer = document.getElementById("linksContainer");
@@ -729,12 +738,4 @@ store.subscribe(() => {
       GoodOne(store.getState());
    }
    console.log(store.getState());
-});
-store.subscribe(() => {
-   // console.log(store.getState());
-   actionFullRegister(store.getState());
-});
-store.subscribe(() => {
-   // console.log(store.getState());
-   actionFullLogin(store.getState());
 });
