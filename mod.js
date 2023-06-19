@@ -43,9 +43,9 @@ const actionPromise = (promiseName, promise) => {
    return async dispatch => {
       try {
          dispatch(actionPending(promiseName));
-         const payload = await promise;
+         const result = await promise;
          dispatch(actionFulfilled(promiseName, result));
-         return payload;
+         return result;
       } catch (error) {
          dispatch(actionRejected(promiseName, error));
       }
@@ -119,6 +119,7 @@ function jwtDecode(token) {
    return null; // или другое значение по умолчанию, если token не является корректным
 }
 
+
 const actionAuthLogin = (token) => ({ type: "AUTH_LOGIN", token });
 const actionAuthLogout = () => ({ type: "AUTH_LOGOUT" });
 
@@ -130,9 +131,9 @@ function authReducer(state = {}, { type, token }) {
       // console.log(payload);
       localStorage.authToken = token;
       // console.log(token);
-      if (localStorage.authToken) {
-         userName.innerHTML = `Добро пожаловать,${payload.sub.login}`;
-      }
+      // if (localStorage.authToken) {
+      //    userName.innerHTML = `Добро пожаловать,${payload.sub.login}`;
+      // }
       return { token, payload };
    }
    if (type === "AUTH_LOGOUT") {
@@ -681,13 +682,16 @@ function actionFullLogin(login, password) {
    return async (dispatch) => {
       const data = await dispatch(actionLogin(login, password));
       console.log(data);
-      if (data) {
+      if (data && data.login) {
          await dispatch(actionAuthLogin(data.login));
+      };
+      if (data?.data?.login.length > 0) {
          const linksContainer = document.getElementById("linksContainer");
          linksContainer.innerHTML = "";
-         const logoutButton = document.getElementById('logout');
-         logoutButton.style.display = 'block';
       }
+      if (data?.data?.login === null) {
+         alert("Не верные данные для входа")
+      };
    };
 }
 
