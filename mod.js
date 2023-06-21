@@ -349,8 +349,8 @@ const gqlRegister = (login, password) => {
    return gql(registerQuery, { login: login, password: password });
 };
 
-const actionRegister = (log, pass) =>
-   actionPromise("Registration", gqlRegister(log, pass));
+const actionRegister = (login, password) =>
+   actionPromise("Registration", gqlRegister(login, password));
 
 //Логін
 const actionLogin = (login, password) => {
@@ -467,6 +467,12 @@ window.addEventListener('hashchange', () => {
    if (newHash.includes('good')) {
       store.dispatch(actionPromise("GoodFindOne", gqlGoodOne(id)));
    }
+   if (newHash.includes('login')) {
+      loginLinkClick();
+   }
+   if (newHash.includes('register')) {
+      registerLinkClick();
+   }
    console.log(id);
 });
 
@@ -544,41 +550,32 @@ function GoodOne(resultOfGetState) {
 
 
 
-let isLinksVisible = false; // Переменная для отслеживания состояния ссылок
-
+let profileClicked = false;
 function clickProfile() {
-   const linksContainer = document.getElementById("linksContainer");
-   if (isLinksVisible) {
-      // Если ссылки уже видимы, скрыть их
-      linksContainer.innerHTML = "";
-      isLinksVisible = false;
-   } else {
+   if (!profileClicked) {
+      const linksContainer = document.getElementById("linksContainer");
+      //login
       const loginLink = document.createElement("a");
       loginLink.href = `#/login`;
       loginLink.id = "login";
+      loginLink.className = "loginformnone";
       loginLink.textContent = "Login"
-      loginLink.addEventListener("click", (event) => {
-         event.preventDefault();
-         loginLinkClick();
-      });
+      //register
       const registerLink = document.createElement("a");
       registerLink.href = `#/register`;
       registerLink.id = "register";
+      registerLink.className = "loginformnone";
       registerLink.textContent = "Register";
-      registerLink.addEventListener("click", (event) => {
-         event.preventDefault();
-         registerLinkClick();
-      });
-      const logoutLink = document.createElement("a");
-      logoutLink.href = ``;
-      logoutLink.id = "logout";
-      logoutLink.textContent = "Logout";
-      logoutLink.onclick = logoutLinkClick;
+      //logout
+      // const logoutLink = document.createElement("a");
+      // logoutLink.href = ``;
+      // logoutLink.id = "logout";
+      // logoutLink.textContent = "Logout";
+      // logoutLink.onclick = logoutLinkClick;
       linksContainer.innerHTML = "";
       linksContainer.appendChild(loginLink);
       linksContainer.appendChild(registerLink);
-      linksContainer.appendChild(logoutLink);
-      isLinksVisible = true;
+      profileClicked = true;
    }
 }
 
@@ -682,12 +679,19 @@ function actionFullLogin(login, password) {
    return async (dispatch) => {
       const data = await dispatch(actionLogin(login, password));
       console.log(data);
-      if (data && data.login) {
-         await dispatch(actionAuthLogin(data.login));
+      if (data && data?.data?.login) {
+         await dispatch(actionAuthLogin(data?.data?.login));
       };
       if (data?.data?.login.length > 0) {
          const linksContainer = document.getElementById("linksContainer");
          linksContainer.innerHTML = "";
+         const logoutLink = document.createElement("a");
+         logoutLink.href = ``;
+         logoutLink.id = "logout";
+         logoutLink.textContent = "Logout";
+         logoutLink.onclick = logoutLinkClick;
+         linksContainer.innerHTML = "";
+         linksContainer.appendChild(logoutLink);
       }
       if (data?.data?.login === null) {
          alert("Не верные данные для входа")
@@ -713,11 +717,6 @@ window.addEventListener("DOMContentLoaded", () => {
       console.log(`${payload.sub.login}`);
    }
 });
-
-
-
-
-
 
 
 
